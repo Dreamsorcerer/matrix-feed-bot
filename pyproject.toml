@@ -9,6 +9,7 @@ license = "GPL-3.0-only"
 python = "^3.8"
 simplematrixbotlib = "^2.6.3"
 reader = "^2.16"
+toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 
