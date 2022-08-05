@@ -1,0 +1,8 @@
+homeserver = "https://example.com"
+username = "username" 
+password = "password"
+
+[[bridge]]
+    name = "matrix.org blog"
+    feed_url = "https://matrix.org/blog/feed"
+    room_id = "!AUweUQXCxcVfFOaOIU:matrix.org"
