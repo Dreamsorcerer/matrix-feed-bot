@@ -34,8 +34,7 @@ async def loop(bot, interval, bridges):
   while True:
     await asyncio.sleep(0.01+interval)
     async with aiohttp.ClientSession() as session:
-      for bridge in bridges:
-        await check_feed(session, bridge)
+      await asyncio.gather(*tuple([check_feed(session, bridge) for bridge in bridges]))
 
 def main():
   if not os.path.isdir('.feeds'):
