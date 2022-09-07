@@ -1,0 +1,1 @@
+from matrix_rss_bridge.utils import bot_factory
