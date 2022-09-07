@@ -10,6 +10,8 @@ python = "^3.8"
 simplematrixbotlib = "^2.6.3"
 reader = "^2.16"
 toml = "^0.10.2"
+aiohttp = "^3.8.1"
+feedparser = "^6.0.10"
 
 [tool.poetry.dev-dependencies]
 
