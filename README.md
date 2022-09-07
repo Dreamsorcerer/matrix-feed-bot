@@ -24,6 +24,7 @@ Create `config.toml` to configure the bridge.
 homeserver = "https://example.com"
 username = "username" 
 password = "password"
+interval = 60 # seconds
 
 [[bridge]]
     name = "matrix.org blog"
