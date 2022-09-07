@@ -1,1 +1,2 @@
+from matrix_rss_bridge.utils import validate_config
 from matrix_rss_bridge.utils import bot_factory
