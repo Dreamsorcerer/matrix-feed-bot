@@ -8,6 +8,7 @@ def validate_config(file_name):
     config['homeserver']
     config['username']
     config['password']
+    config['interval']
     config['bridge']
     for bridge in config['bridge']:
       bridge['name']
