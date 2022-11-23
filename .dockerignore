@@ -1,0 +1,8 @@
+config.toml.example
+Dockerfile
+.dockerignore
+.git
+.gitignore
+LICENSE.md
+README.md
+.venv
