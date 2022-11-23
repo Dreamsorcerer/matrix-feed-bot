@@ -38,6 +38,21 @@ interval = 60 # seconds
 python3 -m poetry run bridge
 ```
 
+## Docker
+
+- Build the docker image:
+
+```
+docker build . -t matrix-rss-bridge
+```
+
+- Create `config.toml` from [here]()
+- Run bridge
+
+```
+docker run matrix-rss-bridge:latest
+```
+
 ## Misc
 
 - Free and Open Source, Licensed under the GPL-3.0-only license.
