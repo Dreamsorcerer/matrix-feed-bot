@@ -46,7 +46,7 @@ python3 -m poetry run bridge
 docker build . -t matrix-rss-bridge
 ```
 
-- Create `config.toml` from [here]()
+- Create `config.toml` from [here](#config)
 - Run bridge
 
 ```
