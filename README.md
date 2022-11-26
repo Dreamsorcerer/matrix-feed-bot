@@ -53,6 +53,14 @@ docker build . -t matrix-rss-bridge
 docker run -v $(pwd)/config.toml:/app/config.toml:ro matrix-rss-bridge:latest
 ```
 
+- **Optionally** it can be build and run with `docker-compose` with the [`docker-compose.yaml`](docker-compose.yaml) file.
+
+    - build the image: `docker-compose build`
+    - run the service: `docker-compose up -d`
+    - check logs: `docker-compose logs -f`
+    - stop the service: `docker-compose stop`
+    - bring down the service: `docker-compose down`
+
 ## Misc
 
 - Free and Open Source, Licensed under the GPL-3.0-only license.
