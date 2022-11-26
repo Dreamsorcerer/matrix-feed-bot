@@ -50,7 +50,7 @@ docker build . -t matrix-rss-bridge
 - Run bridge
 
 ```
-docker run matrix-rss-bridge:latest
+docker run -v $(pwd)/config.toml:/app/config.toml:ro matrix-rss-bridge:latest
 ```
 
 ## Misc
