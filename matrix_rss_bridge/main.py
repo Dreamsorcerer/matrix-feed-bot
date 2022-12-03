@@ -1,6 +1,7 @@
 import asyncio, os
 import simplematrixbotlib as botlib
 import feedparser
+from liquid import Template
 import aiohttp
 from matrix_rss_bridge import validate_config, bot_factory
 
@@ -8,6 +9,8 @@ from matrix_rss_bridge import validate_config, bot_factory
 async def loop(bot, interval, bridges):
   async def check_feed(session, bridge):
     name, url, room_id = bridge['name'], bridge['feed_url'], bridge['room_id']
+    message_template = dict.get(bridge, 'template_markdown', '<h1>{{title}}</h1>\n\n{{published}}\n{{summary}}')
+    template = Template(message_template)
 
     async with session.get(url) as resp:
       rss = await resp.text()
@@ -28,7 +31,7 @@ async def loop(bot, interval, bridges):
         f.write(str(rss))
 
       for entry in entries:
-        message = f"<h1>{entry['title']}</h1>\n\n{entry['published']}\n{entry['link']}\n\n{entry['content'][0]['value']}"
+        message = template.render(**entry)
         await bot.api.send_markdown_message(room_id, message)
 
   while True:

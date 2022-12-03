@@ -30,6 +30,9 @@ interval = 60 # seconds
     name = "matrix.org blog"
     feed_url = "https://matrix.org/blog/feed"
     room_id = "!AUweUQXCxcVfFOaOIU:matrix.org"
+    # template_markdown = """\
+    # <h1>{{title}}</h1>\n\n{{published}}\n{{summary}}\
+    # """
 ```
 
 ### Running
