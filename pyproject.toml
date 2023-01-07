@@ -12,6 +12,7 @@ reader = "^2.16"
 toml = "^0.10.2"
 aiohttp = "^3.8.1"
 feedparser = "^6.0.10"
+python-liquid = "^1.5.0"
 
 [tool.poetry.dev-dependencies]
 
