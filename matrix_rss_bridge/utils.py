@@ -1,15 +1,18 @@
 import simplematrixbotlib as botlib
 import toml
 
+def validate_auth(config):
+    if not any(auth_method in config for auth_method in ['password', 'access_token']):
+            config['password nor access_token']
 
 def validate_config(file_name):
   config = toml.load(file_name)
   try:
     config['homeserver']
     config['username']
-    config['password']
     config['interval']
     config['bridge']
+    validate_auth(config)
     for bridge in config['bridge']:
       bridge['name']
       bridge['feed_url']

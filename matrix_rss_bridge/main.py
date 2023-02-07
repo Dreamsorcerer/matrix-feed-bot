@@ -46,7 +46,9 @@ def main():
   creds = botlib.Creds(
     config['homeserver'],
     config['username'],
-    config['password']
+    config['password'] if 'password' in config else None,
+    config['login_token'] if 'login_token' in config else None,
+    config['access_token'] if 'access_token' in config else None
   )
   bot = bot_factory(
     creds, loop, [

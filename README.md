@@ -34,6 +34,23 @@ interval = 60 # seconds
     # <h1>{{title}}</h1>\n\n{{published}}\n{{summary}}\
     # """
 ```
+If you don't want to save your password, then you can use the bridge account's access token.
+
+```toml
+# config.toml
+homeserver = "https://example.com"
+username = "username"
+access_token = "some_long_string_that_represents_my_access_token"
+interval = 60 # seconds
+
+[[bridge]]
+    name = "matrix.org blog"
+    feed_url = "https://matrix.org/blog/feed"
+    room_id = "!AUweUQXCxcVfFOaOIU:matrix.org"
+    # template_markdown = """\
+    # <h1>{{title}}</h1>\n\n{{published}}\n{{summary}}\
+    # """
+```
 
 ### Running
 
