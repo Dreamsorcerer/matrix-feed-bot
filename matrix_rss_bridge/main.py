@@ -23,7 +23,7 @@ async def loop(bot, interval, bridges):
       new_parsed = feedparser.parse(rss)
 
       if not path.is_file():
-        entries = new_parsed.entries
+        entries = new_parsed.entries[:1]
       else:
         old_parsed = feedparser.parse(path.read_text())
         entries = []
