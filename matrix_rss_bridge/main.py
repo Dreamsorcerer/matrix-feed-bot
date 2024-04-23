@@ -30,7 +30,7 @@ async def loop(bot, interval, bridges):
       with open(f'.feeds/{name}.xml', 'w') as f:
         f.write(str(rss))
 
-      for entry in entries:
+      for entry in reversed(entries):
         message = template.render(**entry)
         await bot.api.send_markdown_message(room_id, message)
 
