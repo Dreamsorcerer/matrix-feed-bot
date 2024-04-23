@@ -1,6 +1,6 @@
 import asyncio
-import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import aiohttp
@@ -9,9 +9,16 @@ import simplematrixbotlib as botlib
 import yarl
 from liquid import Template
 
-from matrix_rss_bridge import validate_config, bot_factory
+FEEDS = PATH("feeds")
 
-FEEDS = PATH(".feeds")
+
+@dataclass
+class BotConfig(botlib.Config):
+    homeserver: str
+    username: str
+    password: str
+    access_token: str
+    interval: int
 
 
 async def loop(bot, interval, bridges):
@@ -48,15 +55,26 @@ async def loop(bot, interval, bridges):
 
 def main():
     FEEDS.mkdir(exist_ok=True)
-    config = validate_config(sys.argv[1] if len(sys.argv) > 1 else "config.toml")
+    config = BotConfig()
+    config.load_toml(sys.argv[1] if len(sys.argv) > 1 else "config.toml")
+    if {"homeserver", "username", "interval"} - config.keys():
+        raise ValueError("Missing config value for 'homeserver', 'username' or 'interval'.")
+    if not any(x in config for x in ("password", "login_token", "access_token")):
+        raise ValueError("Config must contain 'password', 'login_token' or 'access_token'.")
+
     creds = botlib.Creds(
-        config["homeserver"],
-        config["username"],
-        config.get("password"),
-        config.get("login_token"),
-        config.get("access_token")
+        homeserver=config["homeserver"],
+        username=config["username"],
+        password=config.get("password"),
+        login_token=config.get("login_token"),
+        access_token=config.get("access_token")
     )
-    bot = bot_factory(creds, loop, (config["interval"], config["bridge"]))
+    bot = botlib.Bot(creds, config)
+
+    @bot.listener.on_startup
+    async def startup(room_id):
+        await loop(bot, config["interval"], config["bridge"])
+
     bot.run()
 
 if __name__ == "__main__":
