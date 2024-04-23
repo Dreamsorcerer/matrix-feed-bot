@@ -1,14 +1,20 @@
 import asyncio, os, sys
+from pathlib import Path
 import simplematrixbotlib as botlib
 import feedparser
 from liquid import Template
 import aiohttp
+import yarl
 from matrix_rss_bridge import validate_config, bot_factory
+
+FEEDS = PATH(".feeds")
 
 
 async def loop(bot, interval, bridges):
   async def check_feed(session, bridge):
-    name, url, room_id = bridge['name'], bridge['feed_url'], bridge['room_id']
+    url = yarl.URL(bridge["feed_url"])
+    room_id = bridge["room_id"]
+    path = FEEDS / (url.host + url.path).rstrip("/").replace(".", "-").replace("/", "_") + ".xml"
     message_template = dict.get(bridge, 'template_markdown', '<h1>{{title}}</h1>\n\n{{published}}\n{{summary}}')
     template = Template(message_template)
 
@@ -16,19 +22,16 @@ async def loop(bot, interval, bridges):
       rss = await resp.text()
       new_parsed = feedparser.parse(rss)
 
-      if not os.path.isfile(f'.feeds/{name}.xml'):
+      if not path.is_file():
         entries = new_parsed.entries
       else:
+        old_parsed = feedparser.parse(path.read_text())
+        entries = []
+        for entry in new_parsed.entries:
+          if not entry in old_parsed.entries:
+            entries.append(entry)
 
-        with open(f'.feeds/{name}.xml') as f:
-          old_parsed = feedparser.parse(f.read())
-          entries = []
-          for entry in new_parsed.entries:
-            if not entry in old_parsed.entries:
-              entries.append(entry)
-
-      with open(f'.feeds/{name}.xml', 'w') as f:
-        f.write(str(rss))
+      path.write_text(str(rss))
 
       for entry in reversed(entries):
         message = template.render(**entry)
@@ -40,8 +43,7 @@ async def loop(bot, interval, bridges):
     await asyncio.sleep(0.01+interval)
 
 def main():
-  if not os.path.isdir('.feeds'):
-    os.mkdir('.feeds')
+  FEEDS.mkdir(exist_ok=True)
   config = validate_config(sys.argv[1] if len(sys.argv) > 1 else "config.toml")
   creds = botlib.Creds(
     config['homeserver'],
