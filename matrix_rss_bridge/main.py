@@ -35,9 +35,9 @@ async def loop(bot, interval, bridges):
         await bot.api.send_markdown_message(room_id, message)
 
   while True:
-    await asyncio.sleep(0.01+interval)
     async with aiohttp.ClientSession() as session:
       await asyncio.gather(*tuple([check_feed(session, bridge) for bridge in bridges]))
+    await asyncio.sleep(0.01+interval)
 
 def main():
   if not os.path.isdir('.feeds'):
