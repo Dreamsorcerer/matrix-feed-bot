@@ -1,4 +1,4 @@
-import asyncio, os
+import asyncio, os, sys
 import simplematrixbotlib as botlib
 import feedparser
 from liquid import Template
@@ -42,7 +42,7 @@ async def loop(bot, interval, bridges):
 def main():
   if not os.path.isdir('.feeds'):
     os.mkdir('.feeds')
-  config = validate_config("config.toml")
+  config = validate_config(sys.argv[1] if len(sys.argv) > 1 else "config.toml")
   creds = botlib.Creds(
     config['homeserver'],
     config['username'],
