@@ -1,9 +1,5 @@
+[simplematrixbotlib.config]
 homeserver = "https://example.com"
 username = "username" 
 password = "password"
-interval = 60 # seconds
-
-[[bridge]]
-    name = "matrix.org blog"
-    feed_url = "https://matrix.org/blog/feed"
-    room_id = "!AUweUQXCxcVfFOaOIU:matrix.org"
+interval = 60  # Optional number of seconds for polling interval. Defaults to 3600 (1 hour).
