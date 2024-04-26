@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import hashlib
 import json
 import sys
@@ -6,23 +7,42 @@ from collections.abc import Iterable
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
+from time import mktime
 from typing import Required, TypedDict
-from yarl import URL
 
 import feedparser
+import jinja2
 import simplematrixbotlib as botlib
-import yarl
 from aiohttp import ClientSession
-from liquid import Template
 from nio import MatrixRoom, RoomMessage
+from yarl import URL
 
 FEEDS = Path("feeds")
 FEEDS_DATA = FEEDS / "_data.json"
+DEFAULT_TEMPLATE = """
+<h1>
+    {%- if link %}<a href="{{link}}">{% endif %}{{title}}{% if link %}</a>{% endif %}
+    <sup><time>{{published}}</time></sup>
+</h1>
+
+<details>
+    <summary>{{summary}}</summary>
+    {{content}}
+</details>
+"""
+
+
+class EntryDetails(TypedDict):
+    """Parameters to go in template."""
+    title: str
+    link: str | None
+    summary: str
+    content: str
+    published: str
 
 
 class FeedConfig(TypedDict, total=False):
     url: Required[str]
-    template_md: str
 
 FeedsData = dict[str, list[FeedConfig]]
 
@@ -45,6 +65,7 @@ def feed_path(room_id: str, url: str) -> Path:
 class Bot:
     def __init__(self, creds: botlib.Creds, config: BotConfig):
         self._config = config
+        self._template = jinja2.Template(DEFAULT_TEMPLATE, enable_async=True)
         self._bot = botlib.Bot(creds, config)
         self._bot.listener.on_message_event(self.on_message)
         try:
@@ -52,16 +73,22 @@ class Bot:
         except OSError:
             self._feeds = {}
 
+    def details_from_entry(self, entry: feedparser.FeedParserDict) -> EntryDetails:
+        date = str(datetime.datetime.fromtimestamp(mktime(entry.published_parsed)))
+        summary = entry.get("summary", "")
+        content = "\n\n".join(c["value"] for c in entry.content if "html" in c["type"].lower())
+        if content == summary:
+            summary = content.lstrip().split("\n", maxsplit=1)[0]
+        return {"title": entry.get("title", "??"), "link": entry.get("link"),
+                "summary": summary, "content": content, "published": date}
+
     async def on_message(self, room: MatrixRoom, message: RoomMessage) -> None:
         match message.body.split(maxsplit=3):
-            case ("!rss", "subscribe", url, *template):
+            case ("!rss", "subscribe", url):
                 feeds = self._feeds.setdefault(room.room_id, [])
                 if any(f["url"] == url for f in feeds):
                     return
-
                 feed = {"url": url}
-                if template:
-                    feed["template_md"] = template[0]
 
                 async with ClientSession() as sess:
                     await self.update(sess, room.room_id, feed)
@@ -81,9 +108,6 @@ class Bot:
 
     async def update(self, sess: ClientSession, room_id: str, feed: FeedConfig) -> None:
         path = feed_path(room_id, feed["url"])
-        message_template = feed.get("template_md", "<h1>{{title}}</h1>\n\n{{published}}\n{{summary}}")
-        template = Template(message_template)
-
         async with sess.get(URL(feed["url"], encoded=True)) as resp:
             rss = await resp.text()
             new = feedparser.parse(rss)
@@ -95,12 +119,12 @@ class Bot:
                 entries = [entry for entry in new.entries if entry not in old.entries]
 
             for entry in reversed(entries):
-                msg = template.render(**entry)
+                msg = await self._template.render_async(**self.details_from_entry(entry))
                 while msg:
                     if len(msg) > 30000:  # Can't send messages which are too long
                         i = msg.rfind("\n", 0, 30000)
-                        part = msg[:i]
-                        msg = msg[i+1:]
+                        part = msg[:i] + "</details>"
+                        msg = "<details><summary>...continued</summary>" + msg[i+1:]
                     else:
                         part = msg
                         msg = ""

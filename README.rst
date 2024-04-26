@@ -10,7 +10,7 @@ Setup
 Requires Python 3.11+.
 
 Install the dependencies:
-``pip install aiohttp feedparser python-liquid simplematrixbotlib``
+``pip install aiohttp feedparser Jinja2 simplematrixbotlib``
 
 Then copy the ``matrix_feed_bot.py`` file to your server.
 
@@ -91,9 +91,6 @@ To subscribe to a feed in a room:
 ``!rss subscribe https://matrix.org/blog/feed``
 
 The latest entry from the feed should then be posted into the room.
-
-To subscribe with a custom template:
-``!rss subscribe https://matrix.org/blog/feed <h1>{{published}}: {{title}}</h1>\n{{summary}}``
 
 To view all feed subscriptions in a room:
 ``!rss list``
