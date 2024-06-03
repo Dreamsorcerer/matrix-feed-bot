@@ -1,6 +1,8 @@
 import asyncio
 import datetime
+import difflib
 import hashlib
+import html
 import json
 import sys
 from collections.abc import Iterable
@@ -25,10 +27,14 @@ DEFAULT_TEMPLATE = """
     <sup><time>{{published}}</time></sup>
 </h1>
 
+{% if content -%}
 <details>
     <summary>{{summary}}</summary>
     {{content}}
 </details>
+{%- elif summary -%}
+{{summary}}
+{%- endif -%}
 """
 
 
@@ -62,10 +68,22 @@ def feed_path(room_id: str, url: str) -> Path:
     return FEEDS / f"{room_id}:{h}.xml"
 
 
+def format_diff(line: str) -> str:
+    line = html.escape(line, quote=False)
+    if line.startswith("+ "):
+        line = f"<span data-mx-bg-color='#dafbe1' data-mx-color='#1f2328'>{line}</span>"
+    elif line.startswith("- "):
+        line = f"<span data-mx-bg-color='#ffebe9' data-mx-color='#1f2328'>{line}</span>"
+    elif line.startswith("? "):
+        line = f"<span data-mx-bg-color='#afd9ff' data-mx-color='#1f2328'>{line.rstrip()}</span>"
+    return line
+
+
 class Bot:
     def __init__(self, creds: botlib.Creds, config: BotConfig):
         self._config = config
         self._template = jinja2.Template(DEFAULT_TEMPLATE, enable_async=True)
+        self._diff = difflib.Differ()
         self._bot = botlib.Bot(creds, config)
         self._bot.listener.on_message_event(self.on_message)
         try:
@@ -116,7 +134,23 @@ class Bot:
                 entries = new.entries[:1]
             else:
                 old = feedparser.parse(path.read_text())
-                entries = [entry for entry in new.entries if entry not in old.entries]
+                entries = []
+                for entry in new.entries:
+                    for old_entry in old.entries:
+                        if entry.published == old_entry.published and entry.title == old_entry.title:
+                            if not hasattr(entry, "content"):
+                                break
+                            content = "\n\n".join(c["value"] for c in entry.content if "html" in c["type"].lower())
+                            old_content = "\n\n".join(c["value"] for c in old_entry.content if "html" in c["type"].lower())
+                            if content == old_content:
+                                break
+                            diff_g = self._diff.compare(old_content.split("\n"), content.split("\n"))
+                            diff = "\n".join(format_diff(l) for l in diff_g if not l.startswith("  "))
+                            entry.pop("content")
+                            entry["summary"] = f"<pre>{diff}</pre>"
+                            entry["title"] = "<em>Edit:</em> " + entry.title
+                    else:
+                        entries.append(entry)
 
             for entry in reversed(entries):
                 msg = await self._template.render_async(**self.details_from_entry(entry))
