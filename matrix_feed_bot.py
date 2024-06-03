@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
+from textwrap import indent
 from time import mktime
 from typing import Required, TypedDict
 
@@ -93,9 +94,9 @@ class Bot:
 
     def details_from_entry(self, entry: feedparser.FeedParserDict) -> EntryDetails:
         date = str(datetime.datetime.fromtimestamp(mktime(entry.published_parsed)))
-        summary = entry.get("summary", "")
-        content = "\n\n".join(c["value"] for c in entry.content if "html" in c["type"].lower())
-        if content == summary:
+        summary = entry.get("summary", "").strip()
+        content = "\n\n".join(c["value"] for c in getattr(entry, "content", ()) if "html" in c["type"].lower())
+        if content.strip() == summary:
             summary = content.lstrip().split("\n", maxsplit=1)[0]
         return {"title": entry.get("title", "??"), "link": entry.get("link"),
                 "summary": summary, "content": content, "published": date}
@@ -128,6 +129,10 @@ class Bot:
         path = feed_path(room_id, feed["url"])
         async with sess.get(URL(feed["url"], encoded=True)) as resp:
             rss = await resp.text()
+            if not resp.ok:
+                msg = "Error fetching {}:\n{}".format(feed["url"], indent(rss, "  "))
+                await self._bot.api.send_text_message(room_id, msg, "m.notice")
+                return
             new = feedparser.parse(rss)
 
             if not path.is_file():
