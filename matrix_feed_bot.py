@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from textwrap import indent
 from time import mktime
+from types import MappingProxyType
 from typing import Required, TypedDict
 
 import feedparser
@@ -22,6 +23,7 @@ from yarl import URL
 
 FEEDS = Path("feeds")
 FEEDS_DATA = FEEDS / "_data.json"
+HEADERS = MappingProxyType({"User-Agent": "Mozilla/5.0"})
 DEFAULT_TEMPLATE = """
 <h1>
     {%- if link %}<a href="{{link}}">{% endif %}{{title}}{% if link %}</a>{% endif %}
@@ -109,7 +111,7 @@ class Bot:
                     return
                 feed = {"url": url}
 
-                async with ClientSession() as sess:
+                async with ClientSession(headers=HEADERS) as sess:
                     await self.update(sess, room.room_id, feed)
                 feeds.append(feed)
                 FEEDS_DATA.write_text(json.dumps(self._feeds))
@@ -174,7 +176,7 @@ class Bot:
     async def loop(self) -> None:
         await asyncio.sleep(15)  # Small startup delay
         while True:
-            async with ClientSession() as sess:
+            async with ClientSession(headers=HEADERS) as sess:
                 t = (self.update(sess, r, f) for r, data in self._feeds.items() for f in data)
                 await asyncio.gather(*t)
             await asyncio.sleep(self._config.interval)
