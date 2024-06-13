@@ -1,3 +1,5 @@
+__version__ = "1"
+
 import asyncio
 import datetime
 import difflib
